@@ -71,13 +71,13 @@ func getApp() (*firebase.App, error) {
 	log.Printf("Initializing Firebase in environment %s\n", env)
 
 	if env == "DEV" {
-		serviceAccountJsonLocation := os.Getenv("MITS_SERVICE_ACCOUNT")
-		if serviceAccountJsonLocation == "" {
-			serviceAccountJsonLocation = "./service_account.json"
+		serviceAccountJSONLocation := os.Getenv("MITS_SERVICE_ACCOUNT")
+		if serviceAccountJSONLocation == "" {
+			serviceAccountJSONLocation = "./service_account.json"
 		}
-		log.Printf("Using service account %s\n", serviceAccountJsonLocation)
+		log.Printf("Using service account %s\n", serviceAccountJSONLocation)
 
-		opt := option.WithCredentialsFile(serviceAccountJsonLocation)
+		opt := option.WithCredentialsFile(serviceAccountJSONLocation)
 		return firebase.NewApp(ctx, nil, opt)
 	}
 
