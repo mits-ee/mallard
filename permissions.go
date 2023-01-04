@@ -16,15 +16,17 @@ func hasPermissions(token *auth.Token, permissions ...string) bool {
 	}
 
 	for _, permission := range permissions {
-		if value, ok := permissionsMap[permission]; !ok {
+		var value any
+		var ok bool
+
+		if value, ok = permissionsMap[permission]; !ok {
 			// Permission is not in the permissions map on the token
 			return false
-		} else {
-			boolValue, ok := value.(bool)
-			if !ok || !boolValue {
-				// Value is not a boolean or is false
-				return false
-			}
+		}
+
+		if boolValue, ok := value.(bool); !ok || !boolValue {
+			// Value is not a boolean or is false
+			return false
 		}
 	}
 
