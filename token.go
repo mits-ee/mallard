@@ -1,24 +1,18 @@
 package mallard
 
 import (
-	"fmt"
-	"net/http"
 	"strings"
 
 	"firebase.google.com/go/v4/auth"
+	"github.com/gofiber/fiber/v2"
 )
 
-type tokenKeyType struct{ string }
-
-var TokenKey = tokenKeyType{"token"}
-
-func getToken(r *http.Request, authClient *auth.Client) (*auth.Token, error) {
-	tokenStr := r.Header.Get("Authorization")
+func getToken(c *fiber.Ctx, authClient *auth.Client) (*auth.Token, error) {
+	tokenStr := c.Get(fiber.HeaderAuthorization)
 	if tokenStr == "" {
-		return nil, fmt.Errorf("token not found")
+		return nil, nil
 	}
 
 	tokenStr = strings.TrimPrefix(tokenStr, "Bearer ")
-
-	return authClient.VerifyIDToken(r.Context(), tokenStr)
+	return authClient.VerifyIDToken(c.Context(), tokenStr)
 }

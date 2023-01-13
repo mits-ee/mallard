@@ -1,30 +1,41 @@
 package mallard
 
 import (
-	"context"
 	"net/http"
 
 	"firebase.google.com/go/v4/auth"
+	"github.com/gofiber/fiber/v2"
 )
 
-// Perms
-// Usage:
-//
-//	router.HandleFunc("/users", mallard.Perms(authClient, handleUsers(), "users.list")).Methods("GET")
-func Perms(authClient *auth.Client, next http.HandlerFunc, permissions ...string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		token, err := getToken(r, authClient)
+type Config struct {
+	AuthClient *auth.Client
+}
+
+func New(config Config) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		token, err := getToken(c, config.AuthClient)
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
+			return c.SendStatus(http.StatusUnauthorized)
 		}
 
-		if len(permissions) > 0 && !hasPermissions(token, permissions...) {
-			w.WriteHeader(http.StatusForbidden)
-			return
+		if token != nil {
+			c.Locals("idToken", token)
 		}
 
-		ctx := context.WithValue(r.Context(), TokenKey, token)
-		next(w, r.WithContext(ctx))
+		return c.Next()
 	}
+}
+
+func Perms(c *fiber.Ctx, permissions ...string) int {
+	tokenAny := c.Locals("idToken")
+	if tokenAny == nil {
+		return http.StatusUnauthorized
+	}
+	token := tokenAny.(*auth.Token)
+
+	if len(permissions) > 0 && !hasPermissions(token, permissions...) {
+		return http.StatusForbidden
+	}
+
+	return 0
 }

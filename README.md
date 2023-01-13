@@ -19,29 +19,29 @@ passed into the function arguments.
 package main
 
 import (
-	"firebase.google.com/go/v4/auth"
-	mallard "github.com/mits-ee/mallard"
-	"github.com/gorilla/mux"
-	"net/http"
+  "firebase.google.com/go/v4/auth"
+mallard "github.com/mits-ee/mallard"
+  "github.com/gofiber/fiber/v2"
 )
 
-func privateRoute() http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
-        fmt.Fprintf(w, "you have access to the private route")
-    }
+func privateRoute(c *fiber.Ctx) error {
+  if status := mallard.Perms(c, "private.has"); status != 0 {
+    return c.SendStatus(status)
+  }
+
+  return c.SendString("Hello, private route!")
 }
 
 func main() {
-    // Set this up somehow
-    var authClient *auth.Client
+  // Aquire auth client from Firebase
+  var authClient *auth.Client
 
-    router := mux.NewRouter()
-    router.HandleFunc("/private", mallard.Perms(authClient, privateRoute(), "private.get")).
-        Methods("GET")
-		
-    if err := http.ListenAndServe(":8080", router); err != nil {
-        log.Fatalf("Error starting server: %v\n", err)
-    }
+  app := fiber.New()
+  app.Use(mallard.New(mallard.Config{
+    AuthClient: authClient,
+  }))
+  app.Get("/private", privateRoute)
+  app.Listen(":8080")
 }
 ```
 
@@ -55,19 +55,19 @@ Function `GetFirestore` can be used to initialize all needed Firebase services.
 package main
 
 import (
-	"context"
-	"github.com/mits-ee/mallard"
-	"log"
+  "context"
+  "github.com/mits-ee/mallard"
+  "log"
 )
 
 func main() {
-    ctx := context.Background()
-    bundle, err := mallard.GetFirebase(ctx, mallard.Authentication)
-    if err != nil {
-        log.Fatalf("Could not initialize Firebase services: %v\n", err)
-    }
-    // Now Firebase Authentication can be used
-    auth := bundle.Authentication
-    // ...
+  ctx := context.Background()
+  bundle, err := mallard.GetFirebase(ctx, mallard.Authentication)
+  if err != nil {
+    log.Fatalf("Could not initialize Firebase services: %v\n", err)
+  }
+  // Now Firebase Authentication can be used
+  auth := bundle.Authentication
+  // ...
 }
 ```
